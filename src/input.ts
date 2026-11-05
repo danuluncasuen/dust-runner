@@ -13,6 +13,7 @@ export class Input {
   keyDirY = 0;
   private readonly keys = new Set<string>();
   private pauseKey = false;
+  private muteKey = false;
 
   constructor(target: HTMLCanvasElement, renderer: Renderer) {
     const toLogical = (e: PointerEvent) => {
@@ -66,6 +67,7 @@ export class Input {
         e.preventDefault();
       }
       if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') this.pauseKey = true;
+      if (e.key === 'm' || e.key === 'M') this.muteKey = true;
       this.updateHeld();
     });
     window.addEventListener('keyup', (e) => {
@@ -95,6 +97,13 @@ export class Input {
     const p = this.pauseKey;
     this.pauseKey = false;
     return p;
+  }
+
+  // True once after M is pressed.
+  consumeMuteKey(): boolean {
+    const m = this.muteKey;
+    this.muteKey = false;
+    return m;
   }
 
   private updateHeld(): void {

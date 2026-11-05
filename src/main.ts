@@ -1,6 +1,7 @@
 import '@fontsource/jost/500.css';
 import { HITCH, MAX_FRAME, STEP, TESTING, TEXT } from './config';
 import { buildArt } from './art';
+import { Sound } from './audio';
 import { Game } from './game';
 import { Input } from './input';
 import { Renderer } from './gfx/renderer';
@@ -32,9 +33,15 @@ async function start(): Promise<void> {
   const screen = document.getElementById('screen') as HTMLCanvasElement;
   const renderer = new Renderer(screen, art.atlas);
   const input = new Input(screen, renderer);
-  const game = new Game(art, input);
+  const sound = new Sound();
+  const game = new Game(art, input, sound);
+  game.debugHits = new URLSearchParams(location.search).has('hits');
   // Handy for poking at state from the browser console.
-  if (DEBUG) Object.assign(window, { game, renderer, input, art });
+  if (DEBUG) Object.assign(window, { game, renderer, input, art, sound });
+
+  // Audio may only start inside a user gesture; every tap or key press makes sure it's running.
+  screen.addEventListener('pointerdown', () => sound.unlock());
+  window.addEventListener('keydown', () => sound.unlock());
 
   // Fixed-timestep loop: simulate in 1/60 s steps, render once per animation frame.
   let last = performance.now();
@@ -73,6 +80,13 @@ async function start(): Promise<void> {
       requestAnimationFrame(loop);
     }
   });
+
+  // Test builds report the screen they got, for checking the layout on the phone.
+  if (TESTING.lagLog) {
+    setTimeout(() => {
+      console.log(`[screen] css ${innerWidth}x${innerHeight} canvas ${screen.width}x${screen.height} scale ${renderer.scale.toFixed(2)} view ${renderer.viewW.toFixed(0)} origin ${renderer.originX},${renderer.originY} insets L${renderer.insetL.toFixed(1)} R${renderer.insetR.toFixed(1)} B${renderer.insetB.toFixed(1)}`);
+    }, 1500);
+  }
 
   // Draw one frame before the loop starts, so shader compile and texture upload happen now and
   // not on the first frame of play (iOS stalls a frame on the first use of each).

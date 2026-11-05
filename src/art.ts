@@ -44,7 +44,12 @@ export interface Art {
   cell: Pair;
   rover: Layer[];
   hubDot: Region;
-  gaugeCap: Region; // rounded end of the battery gauge
+  gaugeCap: Region; // hull pip
+  edge: Region; // soft horizontal fade for the damage flash at the screen's sides
+  pauseIcon: Region;
+  soundIcon: Region;
+  soundWaves: Region;
+  soundOff: Region;
 }
 
 export function buildArt(): Art {
@@ -77,7 +82,7 @@ export function buildArt(): Art {
       c.fillStyle = g;
       poly(c, [[0, 13], [80, 0], [80, 30], [0, 17]]);
     }),
-    rocks: [rock(a, 12, 8, 1), rock(a, 9, 6, 2), rock(a, 15, 10, 3)],
+    rocks: [rock(a, 34, 23, 1), rock(a, 46, 31, 2), rock(a, 58, 38, 3), rock(a, 28, 19, 4)],
     craterRim: a.bake(34, 9, 4, (c) => ellipse(c, 17, 4.5, 16.5, 4.2)),
     craterIn: a.bake(34, 9, 4, (c) => ellipse(c, 17, 5.4, 14, 3)),
     sample: {
@@ -101,6 +106,34 @@ export function buildArt(): Art {
     rover: rover(a),
     hubDot: a.bake(2, 2, 8, (c) => disc(c, 1, 1, 0.8)),
     gaugeCap: a.bake(4, 4, 8, (c) => disc(c, 2, 2, 2)),
+    edge: a.bake(16, 4, 4, (c) => {
+      const g = c.createLinearGradient(0, 0, 16, 0);
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = g;
+      c.fillRect(0, 0, 16, 4);
+    }),
+    pauseIcon: a.bake(8, 8, 8, (c) => {
+      rrect(c, 1.2, 0.8, 2.2, 6.4, 0.5);
+      rrect(c, 4.6, 0.8, 2.2, 6.4, 0.5);
+    }),
+    soundIcon: a.bake(10, 8, 8, (c) => poly(c, [[0.5, 2.8], [2.4, 2.8], [5, 0.6], [5, 7.4], [2.4, 5.2], [0.5, 5.2]])),
+    soundWaves: a.bake(10, 8, 8, (c) => {
+      c.lineWidth = 0.8;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.arc(5, 4, 2.2, -0.8, 0.8);
+      c.stroke();
+      c.beginPath();
+      c.arc(5, 4, 3.8, -0.8, 0.8);
+      c.stroke();
+    }),
+    soundOff: a.bake(10, 8, 8, (c) => {
+      c.lineWidth = 0.9;
+      c.lineCap = 'round';
+      line(c, 6.4, 2.6, 9, 5.4);
+      line(c, 9, 2.6, 6.4, 5.4);
+    }),
   };
 }
 

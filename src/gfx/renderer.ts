@@ -64,6 +64,10 @@ export class Renderer {
   viewW: number = VIEW.minW;
   originX = 0;
   originY = 0;
+  // Safe-area insets in units: where the notch and home bar cover the view.
+  insetL = 0;
+  insetR = 0;
+  insetB = 0;
   lastCount = 0;
   private readonly canvas: HTMLCanvasElement;
   private readonly atlas: Atlas;
@@ -101,7 +105,12 @@ export class Renderer {
     window.addEventListener('resize', () => this.resize());
     // iOS fills in the safe-area insets after the first layout, which resizes the canvas
     // without a window resize. Watching the canvas itself catches that.
-    new ResizeObserver(() => this.resize()).observe(canvas);
+    const observer = new ResizeObserver(() => this.resize());
+    observer.observe(canvas);
+    // The canvas fills the screen, so a change of insets alone (rotating the notch to the other
+    // side) only shows up on the element that carries them.
+    const safe = document.getElementById('safe');
+    if (safe) observer.observe(safe, { box: 'border-box' });
   }
 
   resize(): void {
@@ -122,6 +131,14 @@ export class Renderer {
     }
     this.originX = Math.floor((w - this.viewW * this.scale) / 2);
     this.originY = Math.floor((h - VIEW.h * this.scale) / 2);
+    const safe = document.getElementById('safe');
+    if (safe) {
+      const css = getComputedStyle(safe);
+      const units = (px: string) => ((parseFloat(px) || 0) * dpr) / this.scale;
+      this.insetL = units(css.paddingLeft);
+      this.insetR = units(css.paddingRight);
+      this.insetB = units(css.paddingBottom);
+    }
   }
 
   // Which two palette rows to blend this frame, and how far (0 = all a, 1 = all b).
@@ -148,8 +165,8 @@ export class Renderer {
   }
 
   // A shape stretched to w x h.
-  stretch(r: Region, x: number, y: number, w: number, h: number, color: number, alpha = 1): void {
-    this.push(x, y, w, h, r.x, r.y, r.tw, r.th, color, color, alpha, alpha);
+  stretch(r: Region, x: number, y: number, w: number, h: number, color: number, alpha = 1, flip = false): void {
+    this.push(x, y, w, h, flip ? r.x + r.tw : r.x, r.y, flip ? -r.tw : r.tw, r.th, color, color, alpha, alpha);
   }
 
   // A horizontal slice of a wrapping strip: units sx..sx+w of the strip, drawn at x.
